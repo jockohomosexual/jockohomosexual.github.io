@@ -1,1 +1,60 @@
-Hello World!
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Spinning Wheel</title>
+  <script src="https://cdn.jsdelivr.net/npm/winwheel@2.7.0/Winwheel.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.11.0/dist/gsap.min.js"></script>
+  <style>
+    body { text-align: center; font-family: sans-serif; background: #f8f8f8; }
+    canvas { margin-top: 20px; }
+    button { margin-top: 20px; padding: 10px 20px; font-size: 18px; }
+  </style>
+</head>
+<body>
+  <h1>Spinning Wheel</h1>
+  <canvas id="wheelCanvas" width="500" height="500"></canvas><br>
+  <button onclick="wheel.startAnimation()">Spin!</button>
+
+  <script>
+    const sheetURL = 'https://spreadsheets.google.com/feeds/list/1N5Qqj1jSskERwXCxcJHONNqCR_3LaeQyVSlhKmhe3Xk/od6/public/values?alt=json';
+
+    fetch(sheetURL)
+      .then(res => res.json())
+      .then(data => {
+        const rows = data.feed.entry.slice(0, 50);
+        const segments = rows.map(row => {
+          const size = parseFloat(row['gsx$column1']?.$t || 1); // Column A
+          const name = row['gsx$column2']?.$t || "Unnamed";      // Column B
+          return { size, name };
+        });
+
+        const totalSize = segments.reduce((acc, seg) => acc + seg.size, 0);
+        const wheelSegments = segments.map(seg => ({
+          fillStyle: getRandomColor(),
+          text: seg.name,
+          size: (seg.size / totalSize) * 360
+        }));
+
+        const wheel = new Winwheel({
+          canvasId: 'wheelCanvas',
+          segments: wheelSegments,
+          animation: {
+            type: 'spinToStop',
+            duration: 6,
+            spins: 8,
+            callbackFinished: seg => alert('Winner: ' + seg.text)
+          },
+          pins: true,
+          rotationAngle: 0
+        });
+
+        window.wheel = wheel;
+      });
+
+    function getRandomColor() {
+      return '#' + Math.floor(Math.random() * 16777215).toString(16);
+    }
+  </script>
+</body>
+</html>
